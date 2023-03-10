@@ -8,10 +8,12 @@ class Stack{
     int stack[max_depth];
     int tos;
     
-    void constructor(){
-        tos = -1;
-    }
-    public:
+     public:
+
+        Stack(){
+            tos = -1;
+
+        }
     
         void push(int item) {
             if (item < 0 || item > (pow(2,256) -1)){
@@ -36,17 +38,28 @@ class Stack{
             tos--;
             return temp;
         }
+
+        int getTOS(){
+            return tos;
+        }
+
     
 };
 
 class Memory{
   int *memory;
+  int size;
   
-  void constructor(){
-      memory = (int*) calloc(1,sizeof(int));
-      std::cout<<"Running: "<<sizeof(memory)<<std::endl;
-  }
+
   public:
+        Memory(){
+            memory = (int*) calloc(1,sizeof(int));
+            size = 1;
+            if(memory == NULL){
+                std::cout<<"MEmory is null";
+            }
+            // std::cout<<"Running: "<<sizeof(memory)<<std::endl;
+        }
   
       void store(int offset, int value){
           if(offset <0 || offset > (pow(2,256)-1)){
@@ -61,8 +74,8 @@ class Memory{
           
 
           //Expand memory while necessary
-          if(offset > sizeof(memory)/sizeof(int)){
-              memory = (int*) realloc(memory, (sizeof(memory)/sizeof(int)+1) * sizeof(int));
+          if(offset >size){
+              memory = (int*) realloc(memory, (size * sizeof(int)));
               if(memory == NULL){
                   std::cout<<"Cannot increase memory, Memory full"<<std::endl;
                   exit(0);
@@ -71,6 +84,7 @@ class Memory{
             
           //Saving value in the memory
           *(memory+offset) = value;
+          size++; //Increment size of dynamic memory
       }
       
       int load(int offset){
@@ -78,40 +92,48 @@ class Memory{
               std::cout<<"Invalid memory access. Offset: "<<offset<<std::endl;
               exit(0);
           }
-          if(offset >= sizeof(memory)/sizeof(int)){
+          if(offset >= size){
               return 0;
           }
           return *(memory+offset);
       }
       
       void data(){
-          std::cout<<"Length: "<<sizeof(NULL);
+          std::cout<<"Length: "<<sizeof(size);
         //   std::cout<<"VAKUE: "<<(*memory);
       }
   
 };
 
 int main() {
+    // std::cout<<"Hello World"<<endl;
     // Write C++ code here
     Stack obj;
+    std::cout<<obj.getTOS()<<std::endl;
+
     obj.push(2);
+    std::cout<<obj.getTOS()<<std::endl;
     obj.push(3);
+    std::cout<<obj.getTOS()<<std::endl;
+
     obj.push(4);
-    
-    // std::cout<<obj.pop();
+        std::cout<<obj.getTOS()<<std::endl;
+
+    std::cout<<obj.pop()<<std::endl;
     
     // Initializing memory
     Memory M;
-    M.data();
-    // M.store(0,10);
-    // M.store(1,20);
-    // M.store(2,30);
+    // M.data();
+    M.store(0,10);
+    M.store(1,20);
+    M.store(2,30);
     
-    // std::cout<<M.load(0)<<std::endl;
-    // std::cout<<M.load(1)<<std::endl;
-    // std::cout<<M.load(2)<<std::endl;
-    // std::cout<<M.load(3)<<std::endl;
+    std::cout<<M.load(0)<<std::endl;
+    std::cout<<M.load(1)<<std::endl;
+    std::cout<<M.load(2)<<std::endl;
+    std::cout<<M.load(3)<<std::endl;
 
-  
+
+ 
     return 0;
 }
