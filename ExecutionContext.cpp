@@ -1,6 +1,7 @@
-// Online C++ compiler to run C++ program online
 #include <iostream>
 #include <math.h>
+#include <cstddef>
+
 #define max_depth 1024
 
 class Stack{
@@ -105,8 +106,35 @@ class Memory{
   
 };
 
+class ExecutionContext{
+    std::byte code{256};
+    Stack stack;
+    Memory memory;
+    int pc;
+    bool stopped;
+
+    public:
+        ExecutionContext(std::byte _code{256}, int _pc = 0, Memory _memory, Stack _stack){
+            code = _code;
+            stack = _stack;
+            memory = _memory;
+            pc = _pc;
+            stopped = false;
+        }
+
+        void stop(){
+            stopped = true;
+        }
+
+        int readByteCode(int num_of_bytes){
+
+            pc = pc + num_of_bytes;
+
+        }
+
+};
+
 int main() {
-    // std::cout<<"Hello World"<<endl;
     // Write C++ code here
     Stack obj;
     std::cout<<obj.getTOS()<<std::endl;
@@ -132,8 +160,7 @@ int main() {
     std::cout<<M.load(1)<<std::endl;
     std::cout<<M.load(2)<<std::endl;
     std::cout<<M.load(3)<<std::endl;
-
-
+    
  
     return 0;
 }
