@@ -1,6 +1,10 @@
+// Online C++ compiler to run C++ program online
 #include <iostream>
 #include <math.h>
 #include <cstddef>
+#include <vector>
+#include <string>
+#include<functional>
 
 #define max_depth 1024
 
@@ -107,15 +111,42 @@ class Memory{
 };
 
 class ExecutionContext{
-    std::byte code{256};
+    // std::byte code;
+    std::vector<std::byte> bytes;
+
     Stack stack;
     Memory memory;
     int pc;
     bool stopped;
 
+    void initializeByteCode(std::string bytecode){
+        int end = bytecode.length()-1;
+        std::string _opcode = "0x";
+
+        for(int i =0; i <= end;i++){
+        
+            _opcode = _opcode + bytecode[i];
+            
+            //IF odd iteration reset partial string, append to bytes array
+            if(i % 2 != 0){
+                std::byte oneByte = std::byte(std::stoi(_opcode,nullptr,16));
+                //Appending to byte array
+                bytes.push_back(oneByte); 
+                //Reset parital string 
+                _opcode = "0x";
+            }
+    
+        }
+        //Print vector
+        for(int i =0; i < bytes.size();i++){
+            std::cout<<std::to_integer<int>(bytes[i])<<" ";
+        }
+
+    }
+
     public:
-        ExecutionContext(std::byte _code{256}, int _pc = 0, Memory _memory, Stack _stack){
-            code = _code;
+        ExecutionContext(std::string _bytecode, Memory _memory, Stack _stack,int _pc = 0){
+            initializeByteCode(_bytecode);
             stack = _stack;
             memory = _memory;
             pc = _pc;
@@ -126,13 +157,56 @@ class ExecutionContext{
             stopped = true;
         }
 
-        int readByteCode(int num_of_bytes){
-
+        int readByteCode(int num_of_bytes = 1){
+            // Assuming 1 byte per a time
+            int value = bytes[pc+num_of_bytes]; //The value read is as integer
             pc = pc + num_of_bytes;
-
+            return value;
         }
 
 };
+
+class Instruction{
+    public:
+
+        int opcode;
+        std::string name;
+        Instruction(int _opcode, std::string _name){
+            opcode = _opcode;
+            name = _name;
+        }
+
+        // Execute function
+};
+std::vector<Instruction> INSTRUCTIONS;
+std::vector<Instruction> INSTRUCTION_BY_OPCODE;
+
+Instruction register_instruction(int _opcode,std::string _name){
+    Instruction instruction = Instruction(_opcode,_name);
+    //Execute some instruction
+    INSTRUCTIONS.push_back(instruction);
+
+    // Check if the opcode instruction exist in list or not
+    bool exist = false;
+    for(int i =0; i < INSTRUCTION_BY_OPCODE.size();i++){
+        if(_opcode == INSTRUCTION_BY_OPCODE[i].opcode){
+            exist = true;
+        }
+    }
+    if(exist == false){
+        INSTRUCTION_BY_OPCODE[_opcode] = instruction;
+    }
+
+    return instruction;
+
+}
+
+// Instruction definitions
+Instruction STOP = register_instruction(0x00,"STOP");
+Instruction PUSH1 = register_instruction(0x60,"PUSH1");
+Instruction ADD = register_instruction(0x01,"ADD");
+Instruction MUL = register_instruction(0x02,"MULL");
+
 
 int main() {
     // Write C++ code here
@@ -160,7 +234,6 @@ int main() {
     std::cout<<M.load(1)<<std::endl;
     std::cout<<M.load(2)<<std::endl;
     std::cout<<M.load(3)<<std::endl;
-    
- 
+
     return 0;
 }
