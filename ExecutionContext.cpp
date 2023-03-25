@@ -113,6 +113,7 @@ class Memory{
 class ExecutionContext{
     // std::byte code;
     std::vector<std::byte> bytes;
+    public:
 
     Stack stack;
     Memory memory;
@@ -144,7 +145,9 @@ class ExecutionContext{
 
     }
 
-    public:
+        ExecutionContext(){
+            std::cout<<"Initialized";
+        }
         ExecutionContext(std::string _bytecode, Memory _memory, Stack _stack,int _pc = 0){
             initializeByteCode(_bytecode);
             stack = _stack;
@@ -165,8 +168,9 @@ class ExecutionContext{
         }
 
 };
-
+template<typename T = std::nullptr_t>
 class Instruction{
+    T *exec_func;
     public:
 
         int opcode;
@@ -175,14 +179,23 @@ class Instruction{
             opcode = _opcode;
             name = _name;
         }
+        // Register execution function
+        void registerExec(T _exec_func){
+            exec_func = _exec_func;
+        }
+        //Execute function
+        void execute(){
+            exec_func();
+        }
 
-        // Execute function
 };
-std::vector<Instruction> INSTRUCTIONS;
-std::vector<Instruction> INSTRUCTION_BY_OPCODE;
 
-Instruction register_instruction(int _opcode,std::string _name){
+std::vector<Instruction<>> INSTRUCTIONS;
+std::vector<Instruction<>> INSTRUCTION_BY_OPCODE;
+template<typename F>
+Instruction<> register_instruction(int _opcode,std::string _name, F execute_func){
     Instruction instruction = Instruction(_opcode,_name);
+    instruction.registerExec(std::bind([](F exec_func){exec_func();},execute_func)); //Registering exec func
     //Execute some instruction
     INSTRUCTIONS.push_back(instruction);
 
@@ -200,12 +213,29 @@ Instruction register_instruction(int _opcode,std::string _name){
     return instruction;
 
 }
+// Global Execution context
+ExecutionContext ctx;
 
 // Instruction definitions
-Instruction STOP = register_instruction(0x00,"STOP");
-Instruction PUSH1 = register_instruction(0x60,"PUSH1");
-Instruction ADD = register_instruction(0x01,"ADD");
-Instruction MUL = register_instruction(0x02,"MULL");
+Instruction<> STOP = register_instruction(0x00,"STOP",std::bind([](ExecutionContext _ctx){
+    std::cout<<"STOP called"<<std::endl;
+    _ctx.stop();    
+},ctx));
+
+Instruction<> PUSH1 = register_instruction(0x60,"PUSH1",std::bind([](ExecutionContext _ctx){
+    std::cout<<"PUSH1 called"<<std::endl;
+    _ctx.stack.push(_ctx.readByteCode(1));
+},ctx));
+
+Instruction<> ADD = register_instruction(0x01,"ADD",std::bind([](ExecutionContext _ctx){
+    std::cout<<"ADD called"<<std::endl;
+    _ctx.stack.push((_ctx.stack.pop() + _ctx.stack.pop()) % int(pow(2,256)));
+},ctx));
+
+Instruction<> MUL = register_instruction(0x02,"MULL",std::bind([](ExecutionContext _ctx){
+    std::cout<<"MUL called"<<std::endl;
+    _ctx.stack.push((_ctx.stack.pop() * _ctx.stack.pop()) % int(pow(2,256)));
+},ctx));
 
 
 int main() {
