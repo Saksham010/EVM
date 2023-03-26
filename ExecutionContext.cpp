@@ -238,6 +238,20 @@ Instruction MUL = register_instruction(0x02,"MULL",[](){
 });
 
 
+// Decoding opcode
+Instruction decode_opcode(ExecutionContext _ctx_){
+
+    // Check if pc is off the range (left to implement)
+
+    //Reading one opcode
+    int opcode = _ctx_.readByteCode(1);
+    Instruction _instruction = INSTRUCTION_BY_OPCODE[opcode];
+    
+    // Instruction type check (left to implement)
+
+    return _instruction;
+}
+
 int main() {
     // Write C++ code here
     Stack obj;
