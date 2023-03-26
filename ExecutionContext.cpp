@@ -162,15 +162,15 @@ class ExecutionContext{
 
         int readByteCode(int num_of_bytes = 1){
             // Assuming 1 byte per a time
-            int value = bytes[pc+num_of_bytes]; //The value read is as integer
+            int value = int(bytes[pc+num_of_bytes]); //The value read is as integer
             pc = pc + num_of_bytes;
             return value;
         }
 
 };
-template<typename T = std::nullptr_t>
+// template<typename T = std::nullptr_t>
 class Instruction{
-    T *exec_func;
+    std::function<void()> callable_func;
     public:
 
         int opcode;
@@ -180,22 +180,22 @@ class Instruction{
             name = _name;
         }
         // Register execution function
-        void registerExec(T _exec_func){
-            exec_func = _exec_func;
+        void registerExec(std::function<void()> _exec_func){
+            callable_func = _exec_func;
         }
         //Execute function
         void execute(){
-            exec_func();
+            callable_func();
         }
 
 };
 
-std::vector<Instruction<>> INSTRUCTIONS;
-std::vector<Instruction<>> INSTRUCTION_BY_OPCODE;
-template<typename F>
-Instruction<> register_instruction(int _opcode,std::string _name, F execute_func){
+std::vector<Instruction> INSTRUCTIONS;
+std::vector<Instruction> INSTRUCTION_BY_OPCODE;
+Instruction register_instruction(int _opcode,std::string _name, std::function<void()> execute_func){
     Instruction instruction = Instruction(_opcode,_name);
-    instruction.registerExec(std::bind([](F exec_func){exec_func();},execute_func)); //Registering exec func
+    // instruction.registerExec(std::bind([](F exec_func){exec_func();},execute_func)); //Registering exec func
+    instruction.registerExec(execute_func); //Registering exec func
     //Execute some instruction
     INSTRUCTIONS.push_back(instruction);
 
@@ -217,25 +217,25 @@ Instruction<> register_instruction(int _opcode,std::string _name, F execute_func
 ExecutionContext ctx;
 
 // Instruction definitions
-Instruction<> STOP = register_instruction(0x00,"STOP",std::bind([](ExecutionContext _ctx){
+Instruction STOP = register_instruction(0x00,"STOP",[](){
     std::cout<<"STOP called"<<std::endl;
-    _ctx.stop();    
-},ctx));
+    ctx.stop();    
+});
 
-Instruction<> PUSH1 = register_instruction(0x60,"PUSH1",std::bind([](ExecutionContext _ctx){
+Instruction PUSH1 = register_instruction(0x60,"PUSH1",[](){
     std::cout<<"PUSH1 called"<<std::endl;
-    _ctx.stack.push(_ctx.readByteCode(1));
-},ctx));
+    ctx.stack.push(ctx.readByteCode(1));
+});
 
-Instruction<> ADD = register_instruction(0x01,"ADD",std::bind([](ExecutionContext _ctx){
+Instruction ADD = register_instruction(0x01,"ADD",[](){
     std::cout<<"ADD called"<<std::endl;
-    _ctx.stack.push((_ctx.stack.pop() + _ctx.stack.pop()) % int(pow(2,256)));
-},ctx));
+    ctx.stack.push((ctx.stack.pop() + ctx.stack.pop()) % int(pow(2,256)));
+});
 
-Instruction<> MUL = register_instruction(0x02,"MULL",std::bind([](ExecutionContext _ctx){
+Instruction MUL = register_instruction(0x02,"MULL",[](){
     std::cout<<"MUL called"<<std::endl;
-    _ctx.stack.push((_ctx.stack.pop() * _ctx.stack.pop()) % int(pow(2,256)));
-},ctx));
+    ctx.stack.push((ctx.stack.pop() * ctx.stack.pop()) % int(pow(2,256)));
+});
 
 
 int main() {
