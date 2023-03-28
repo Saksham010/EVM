@@ -48,6 +48,14 @@ class Stack{
             return tos;
         }
 
+        void print(){
+            std::cout<<"Stack: [";
+            for(int i =0; i <tos;i++){
+                std::cout<<stack[i]<<",";
+            }
+            std::cout<<"]"<<std::endl;
+        }
+
     
 };
 
@@ -156,6 +164,7 @@ class ExecutionContext{
             stopped = false;
         }
 
+
         void stop(){
             stopped = true;
         }
@@ -252,32 +261,65 @@ Instruction decode_opcode(ExecutionContext _ctx_){
     return _instruction;
 }
 
-int main() {
-    // Write C++ code here
-    Stack obj;
-    std::cout<<obj.getTOS()<<std::endl;
+void run(std::string code){
+    // Initialize execution context
+    ctx.initializeByteCode(code);
+    Memory _m;
+    Stack _s;
+    ctx.memory = _m;
+    ctx.stack = _s;
+    ctx.stopped =false;
+    ctx.pc = 0;
 
-    obj.push(2);
-    std::cout<<obj.getTOS()<<std::endl;
-    obj.push(3);
-    std::cout<<obj.getTOS()<<std::endl;
+    int prev_pc;
+    // Run EVM
+    while(ctx.stopped!= true){
+        prev_pc = ctx.pc;
+        //Get the current task
+        Instruction task =  decode_opcode(ctx);
+        //Execute the current task
+        task.execute();
 
-    obj.push(4);
-        std::cout<<obj.getTOS()<<std::endl;
+        // Displaying evm
+        std::cout<<task.name<<" @ pc = "<<prev_pc<<std::endl;
+        ctx.stack.print();
+        // Memory display left
+    }
+}
 
-    std::cout<<obj.pop()<<std::endl;
+int main(int argc, char* argv[]){
+    // Stack obj;
+    // std::cout<<obj.getTOS()<<std::endl;
+
+    // obj.push(2);
+    // std::cout<<obj.getTOS()<<std::endl;
+    // obj.push(3);
+    // std::cout<<obj.getTOS()<<std::endl;
+
+    // obj.push(4);
+    //     std::cout<<obj.getTOS()<<std::endl;
+
+    // std::cout<<obj.pop()<<std::endl;
     
-    // Initializing memory
-    Memory M;
-    // M.data();
-    M.store(0,10);
-    M.store(1,20);
-    M.store(2,30);
+    // // Initializing memory
+    // Memory M;
+    // // M.data();
+    // M.store(0,10);
+    // M.store(1,20);
+    // M.store(2,30);
     
-    std::cout<<M.load(0)<<std::endl;
-    std::cout<<M.load(1)<<std::endl;
-    std::cout<<M.load(2)<<std::endl;
-    std::cout<<M.load(3)<<std::endl;
+    // std::cout<<M.load(0)<<std::endl;
+    // std::cout<<M.load(1)<<std::endl;
+    // std::cout<<M.load(2)<<std::endl;
+    // std::cout<<M.load(3)<<std::endl;
+
+
+    std::cout<<"The no of argument is: "<<argc<<std::endl;
+    for (int i = 0; i < argc; i++) {
+        std::cout<<argv[i]<<std::endl;
+    }
+
+    
 
     return 0;
 }
