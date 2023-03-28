@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 #include<functional>
+#include <unordered_map>
+
 
 #define max_depth 1024
 
@@ -32,6 +34,7 @@ class Stack{
             }
             tos++;
             stack[tos] = item;
+            std::cout<<"Successfully pushed: "<<item;
         }
         
         int pop(){
@@ -47,10 +50,12 @@ class Stack{
         int getTOS(){
             return tos;
         }
-
+        int getTopValue(){
+            return stack[tos];
+        }
         void print(){
             std::cout<<"Stack: [";
-            for(int i =0; i <tos;i++){
+            for(int i =0; i <=tos;i++){
                 std::cout<<stack[i]<<",";
             }
             std::cout<<"]"<<std::endl;
@@ -128,6 +133,10 @@ class ExecutionContext{
     int pc;
     bool stopped;
 
+
+    // Opcode to operand mapping
+    std::unordered_map<int,int> _opcode_to_operand;
+
     void initializeByteCode(std::string bytecode){
         int end = bytecode.length()-1;
         std::string _opcode = "0x";
@@ -171,12 +180,22 @@ class ExecutionContext{
 
         int readByteCode(int num_of_bytes = 1){
             // Assuming 1 byte per a time
-            int value = int(bytes[pc+num_of_bytes]); //The value read is as integer
-            pc = pc + num_of_bytes;
-            return value;
+            // std::cout<<std::endl<<"PC at this time: "<<pc;
+            // std::cout<<" READ BYTE: "<<std::to_integer<int>(bytes[pc]);
+
+            int opcode_value = int(bytes[pc]);  //The type of operation
+            int operand_value = int(bytes[pc+num_of_bytes]); //The operand to be operated on
+            // Create a mapping
+            _opcode_to_operand[opcode_value] = operand_value;
+
+            pc = pc + num_of_bytes +1;
+            return opcode_value;
         }
 
 };
+// Global Execution context
+ExecutionContext ctx;
+
 // template<typename T = std::nullptr_t>
 class Instruction{
     std::function<void()> callable_func;
@@ -184,6 +203,10 @@ class Instruction{
 
         int opcode;
         std::string name;
+        Instruction(){
+            // std::cout<<"Instruction initialized"<<std::endl;
+        }
+
         Instruction(int _opcode, std::string _name){
             opcode = _opcode;
             name = _name;
@@ -194,36 +217,51 @@ class Instruction{
         }
         //Execute function
         void execute(){
+
             callable_func();
         }
 
 };
 
 std::vector<Instruction> INSTRUCTIONS;
-std::vector<Instruction> INSTRUCTION_BY_OPCODE;
+// std::vector<Instruction> INSTRUCTION_BY_OPCODE;
+std::unordered_map<int,Instruction> INSTRUCTION_BY_OPCODE;
 Instruction register_instruction(int _opcode,std::string _name, std::function<void()> execute_func){
+    std::cout<<"Incomming opcode : "<<_opcode<<std::endl;
     Instruction instruction = Instruction(_opcode,_name);
     // instruction.registerExec(std::bind([](F exec_func){exec_func();},execute_func)); //Registering exec func
     instruction.registerExec(execute_func); //Registering exec func
-    //Execute some instruction
+
+    // //Execute some instruction
     INSTRUCTIONS.push_back(instruction);
 
     // Check if the opcode instruction exist in list or not
     bool exist = false;
-    for(int i =0; i < INSTRUCTION_BY_OPCODE.size();i++){
-        if(_opcode == INSTRUCTION_BY_OPCODE[i].opcode){
-            exist = true;
-        }
-    }
+
+    // if(auto:){
+
+    // }
+
+    // if(INSTRUCTION_BY_OPCODE.find(_opcode) != 0){
+    //     exist =true;
+    //     // std::cout<<"Instruction already exisits: "<<INSTRUCTION_BY_OPCODE[_opcode]<<std::endl;
+    // }
+    // for(int i =0; i < INSTRUCTION_BY_OPCODE.size();i++){
+    //     if(_opcode == INSTRUCTION_BY_OPCODE[i].opcode){
+    //         exist = true;
+    //     }
+    // }
+    // std::cout<<std::endl<<" opcode: "<<_opcode;
     if(exist == false){
+        // auto iterator = INSTRUCTION_BY_OPCODE.begin()+_opcode;
+        
+        // INSTRUCTION_BY_OPCODE.insert(iterator,instruction);
         INSTRUCTION_BY_OPCODE[_opcode] = instruction;
     }
 
     return instruction;
 
 }
-// Global Execution context
-ExecutionContext ctx;
 
 // Instruction definitions
 Instruction STOP = register_instruction(0x00,"STOP",[](){
@@ -233,7 +271,12 @@ Instruction STOP = register_instruction(0x00,"STOP",[](){
 
 Instruction PUSH1 = register_instruction(0x60,"PUSH1",[](){
     std::cout<<"PUSH1 called"<<std::endl;
-    ctx.stack.push(ctx.readByteCode(1));
+    // Reading value to be pushed
+    int _opcode = ctx.readByteCode(1);
+    int _value = ctx._opcode_to_operand[_opcode];
+
+    // Pushing value to the stack
+    ctx.stack.push(_value);
 });
 
 Instruction ADD = register_instruction(0x01,"ADD",[](){
@@ -254,7 +297,9 @@ Instruction decode_opcode(ExecutionContext _ctx_){
 
     //Reading one opcode
     int opcode = _ctx_.readByteCode(1);
+    std::cout<<" Bytecode:  "<<opcode;
     Instruction _instruction = INSTRUCTION_BY_OPCODE[opcode];
+    std::cout<<" Bytecode corresponding instruction name: "<<_instruction.name;
     
     // Instruction type check (left to implement)
 
@@ -276,9 +321,16 @@ void run(std::string code){
     while(ctx.stopped!= true){
         prev_pc = ctx.pc;
         //Get the current task
+        // std::cout<<std::endl<<"before decoding opcode"<<std::endl;
         Instruction task =  decode_opcode(ctx);
+        // std::cout<<std::endl<<"after decoding opcode"<<std::endl;
+        std::cout<<"Task name: "<<task.name;
+
         //Execute the current task
+        // std::cout<<std::endl<<"before executing opcode"<<std::endl;
         task.execute();
+        // std::cout<<std::endl<<"after executing opcode"<<std::endl;
+
 
         // Displaying evm
         std::cout<<task.name<<" @ pc = "<<prev_pc<<std::endl;
@@ -314,12 +366,16 @@ int main(int argc, char* argv[]){
     // std::cout<<M.load(3)<<std::endl;
 
 
-    std::cout<<"The no of argument is: "<<argc<<std::endl;
-    for (int i = 0; i < argc; i++) {
-        std::cout<<argv[i]<<std::endl;
-    }
-
+    // std::cout<<"The no of argument is: "<<argc<<std::endl;
+    // for (int i = 0; i < argc; i++) {
+    //     std::cout<<argv[i]<<std::endl;
+    // }
+    std::string compiled_opcode = argv[1];
+    run(compiled_opcode);
     
 
     return 0;
 }
+
+
+// 600660070200
