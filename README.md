@@ -8,6 +8,7 @@ Building a basic evm clone from scratch
   <img src="https://iili.io/HNLjoAX.png" title="Opcode" alt="Opcode" width="40" height="40"/>&nbsp;
   [![Screenshot-from-2023-03-29-19-29-48.png](https://i.postimg.cc/RVBWty3G/Screenshot-from-2023-03-29-19-29-48.png)](https://postimg.cc/CdcMTvsf)
 </div>
+[![Screenshot-from-2023-03-29-19-29-48.png](https://i.postimg.cc/RVBWty3G/Screenshot-from-2023-03-29-19-29-48.png)](https://postimg.cc/CdcMTvsf)
 
 In above example
   a) first command pushes "6" to stack
