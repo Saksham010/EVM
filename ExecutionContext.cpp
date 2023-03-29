@@ -71,15 +71,26 @@ class Memory{
 
   public:
         Memory(){
+            
+            memory = NULL;
+            size = 0;
+        }
+        void initializeMemory(){
             memory = (int*) calloc(1,sizeof(int));
-            size = 1;
             if(memory == NULL){
                 std::cout<<"MEmory is null";
             }
             // std::cout<<"Running: "<<sizeof(memory)<<std::endl;
+
         }
   
       void store(int offset, int value){
+        // If storing the first time
+            if(memory ==NULL){
+                initializeMemory();
+            }
+
+
           if(offset <0 || offset > (pow(2,256)-1)){
               std::cout<<"Invalid memory access. Offset: "<<offset<<" Value: "<<value<<std::endl;
               exit(0);
@@ -99,6 +110,8 @@ class Memory{
                   exit(0);
               }
           }
+
+        //   std::cout<<"Value: "<<value;
             
           //Saving value in the memory
           *(memory+offset) = value;
@@ -111,6 +124,7 @@ class Memory{
               exit(0);
           }
           if(offset >= size){
+            // std::cout<<"OOPSS CALLED :: OFFSET: "<<offset<<std::endl;
               return 0;
           }
           return *(memory+offset);
@@ -120,6 +134,23 @@ class Memory{
           std::cout<<"Length: "<<sizeof(size);
         //   std::cout<<"VAKUE: "<<(*memory);
       }
+    
+    int load_range(int offset, int length =1){
+        if(offset <0 || offset >size){
+            std::cout<<"INVALID Memory Access (Exiting)"<<std::endl;
+            exit(0);
+        }
+        // std::cout<<"LOAD REANGE: :: "<<offset<<"LENGTH "<<length;
+        return load(offset);
+    }
+    // Print memory
+    void print(){
+        std::cout<<"Memory: [";
+        for(int i =0; i<size;i++){
+            std::cout<<*(memory+i)<<",";
+        }
+        std::cout<<"]"<<std::endl;
+    }
   
 };
 
@@ -132,6 +163,7 @@ class ExecutionContext{
     Memory memory;
     int pc;
     bool stopped;
+    int return_data;
 
 
     // Opcode to operand mapping
@@ -167,6 +199,7 @@ class ExecutionContext{
 
         ExecutionContext(){
             std::cout<<"Execution context initialized"<<std::endl;
+            return_data = 0;
         }
         ExecutionContext(std::string _bytecode, Memory _memory, Stack _stack,int _pc = 0){
             initializeByteCode(_bytecode);
@@ -195,6 +228,11 @@ class ExecutionContext{
         }
         void inc_pc(){
             pc = pc +1;
+        }
+
+        void set_return_data(int offset, int length=1){
+            stopped = true;
+            return_data = memory.load_range(offset,length);
         }
 
 };
@@ -263,6 +301,9 @@ Instruction PUSH1 = register_instruction(0x60,"PUSH1",[](){
 
     // Pushing value to the stack
     ctx.stack.push(_value);
+
+    // Increment pc again by 1 since the next code is opcode
+    ctx.inc_pc();
 });
 
 Instruction ADD = register_instruction(0x01,"ADD",[](){
@@ -273,6 +314,25 @@ Instruction ADD = register_instruction(0x01,"ADD",[](){
 Instruction MUL = register_instruction(0x02,"MULL",[](){
     std::cout<<"MUL called"<<std::endl;
     ctx.stack.push((ctx.stack.pop() * ctx.stack.pop()) % int(pow(2,256)));
+});
+
+Instruction MSTORE8 = register_instruction(0x53,"MSTORE8",[](){
+    std::cout<<"MSTORE8 called"<<std::endl;
+    int offset = ctx.stack.pop();
+    int value = ctx.stack.pop();
+    ctx.memory.store(offset,value);
+});
+
+Instruction RETURN = register_instruction(0xf3,"RETURN",[](){
+    std::cout<<"RETURN called"<<std::endl;
+    // std::cout<<"TOSVALUE: "<<ctx.stack.getTopValue()<<std::endl;
+    int _offset = ctx.stack.pop();
+    int _length = ctx.stack.pop();
+
+
+    ctx.set_return_data(_offset,_length); //Passing frist tos as offset and second as length which is 1 by default(Dynamic to be implemented)
+
+
 });
 
 std::unordered_map<int,bool> isOpcode;
@@ -329,7 +389,8 @@ void run(std::string code){
             // Displaying evm
             std::cout<<task.name<<" @ pc = "<<prev_pc<<std::endl;
             ctx.stack.print();
-            // Memory display left
+            // Memory display 
+            ctx.memory.print();
         }
         else{
             // Move to the next byte
@@ -337,6 +398,8 @@ void run(std::string code){
         }
       
     }
+    // Printing returned data
+    std::cout<<"OUPUT: "<<ctx.return_data<<std::endl;
 }
 
 int main(int argc, char* argv[]){
