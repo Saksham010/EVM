@@ -34,3 +34,7 @@
 
 #VScode
 .vscode
+
+#output
+a.out
+.vscode/settings.json

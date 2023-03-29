@@ -34,7 +34,7 @@ class Stack{
             }
             tos++;
             stack[tos] = item;
-            std::cout<<"Successfully pushed: "<<item;
+            // std::cout<<"Successfully pushed: "<<item<<" to the stack "<<std::endl;
         }
         
         int pop(){
@@ -124,9 +124,9 @@ class Memory{
 };
 
 class ExecutionContext{
+    public:
     // std::byte code;
     std::vector<std::byte> bytes;
-    public:
 
     Stack stack;
     Memory memory;
@@ -136,6 +136,7 @@ class ExecutionContext{
 
     // Opcode to operand mapping
     std::unordered_map<int,int> _opcode_to_operand;
+    int current_opcode;
 
     void initializeByteCode(std::string bytecode){
         int end = bytecode.length()-1;
@@ -156,14 +157,16 @@ class ExecutionContext{
     
         }
         //Print vector
+        std::cout<<"Instructions: ";
         for(int i =0; i < bytes.size();i++){
             std::cout<<std::to_integer<int>(bytes[i])<<" ";
         }
+        std::cout<<std::endl;
 
     }
 
         ExecutionContext(){
-            std::cout<<"Initialized";
+            std::cout<<"Execution context initialized"<<std::endl;
         }
         ExecutionContext(std::string _bytecode, Memory _memory, Stack _stack,int _pc = 0){
             initializeByteCode(_bytecode);
@@ -180,16 +183,18 @@ class ExecutionContext{
 
         int readByteCode(int num_of_bytes = 1){
             // Assuming 1 byte per a time
-            // std::cout<<std::endl<<"PC at this time: "<<pc;
-            // std::cout<<" READ BYTE: "<<std::to_integer<int>(bytes[pc]);
-
             int opcode_value = int(bytes[pc]);  //The type of operation
             int operand_value = int(bytes[pc+num_of_bytes]); //The operand to be operated on
             // Create a mapping
             _opcode_to_operand[opcode_value] = operand_value;
-
-            pc = pc + num_of_bytes +1;
+            // Updating current opcode
+            current_opcode = opcode_value;
+            pc = pc + num_of_bytes;
+            // std::cout<<std::endl<<"MULPC: "<<pc<<std::endl;
             return opcode_value;
+        }
+        void inc_pc(){
+            pc = pc +1;
         }
 
 };
@@ -224,12 +229,9 @@ class Instruction{
 };
 
 std::vector<Instruction> INSTRUCTIONS;
-// std::vector<Instruction> INSTRUCTION_BY_OPCODE;
 std::unordered_map<int,Instruction> INSTRUCTION_BY_OPCODE;
 Instruction register_instruction(int _opcode,std::string _name, std::function<void()> execute_func){
-    std::cout<<"Incomming opcode : "<<_opcode<<std::endl;
     Instruction instruction = Instruction(_opcode,_name);
-    // instruction.registerExec(std::bind([](F exec_func){exec_func();},execute_func)); //Registering exec func
     instruction.registerExec(execute_func); //Registering exec func
 
     // //Execute some instruction
@@ -238,24 +240,8 @@ Instruction register_instruction(int _opcode,std::string _name, std::function<vo
     // Check if the opcode instruction exist in list or not
     bool exist = false;
 
-    // if(auto:){
-
-    // }
-
-    // if(INSTRUCTION_BY_OPCODE.find(_opcode) != 0){
-    //     exist =true;
-    //     // std::cout<<"Instruction already exisits: "<<INSTRUCTION_BY_OPCODE[_opcode]<<std::endl;
-    // }
-    // for(int i =0; i < INSTRUCTION_BY_OPCODE.size();i++){
-    //     if(_opcode == INSTRUCTION_BY_OPCODE[i].opcode){
-    //         exist = true;
-    //     }
-    // }
-    // std::cout<<std::endl<<" opcode: "<<_opcode;
     if(exist == false){
-        // auto iterator = INSTRUCTION_BY_OPCODE.begin()+_opcode;
-        
-        // INSTRUCTION_BY_OPCODE.insert(iterator,instruction);
+
         INSTRUCTION_BY_OPCODE[_opcode] = instruction;
     }
 
@@ -272,7 +258,7 @@ Instruction STOP = register_instruction(0x00,"STOP",[](){
 Instruction PUSH1 = register_instruction(0x60,"PUSH1",[](){
     std::cout<<"PUSH1 called"<<std::endl;
     // Reading value to be pushed
-    int _opcode = ctx.readByteCode(1);
+    int _opcode = ctx.current_opcode;
     int _value = ctx._opcode_to_operand[_opcode];
 
     // Pushing value to the stack
@@ -289,19 +275,32 @@ Instruction MUL = register_instruction(0x02,"MULL",[](){
     ctx.stack.push((ctx.stack.pop() * ctx.stack.pop()) % int(pow(2,256)));
 });
 
-
+std::unordered_map<int,bool> isOpcode;
 // Decoding opcode
 Instruction decode_opcode(ExecutionContext _ctx_){
 
-    // Check if pc is off the range (left to implement)
+    // Check if pc is off the range (
+    if(ctx.pc < 0 || ctx.pc >= ctx.bytes.size()){
+        // Return Stop instruction
+        return STOP;
+
+    }
 
     //Reading one opcode
-    int opcode = _ctx_.readByteCode(1);
-    std::cout<<" Bytecode:  "<<opcode;
+    int opcode = ctx.readByteCode(1);
     Instruction _instruction = INSTRUCTION_BY_OPCODE[opcode];
-    std::cout<<" Bytecode corresponding instruction name: "<<_instruction.name;
     
-    // Instruction type check (left to implement)
+    // Instruction type check 
+    // If the instruction has empty properties then it is not an opcode but operand
+    if(_instruction.name == ""){
+        // std::cout<<"Not operand"<<std::endl;
+        isOpcode[opcode] = false;
+        
+    }
+    else{
+        isOpcode[opcode] = true;
+    }
+
 
     return _instruction;
 }
@@ -321,21 +320,22 @@ void run(std::string code){
     while(ctx.stopped!= true){
         prev_pc = ctx.pc;
         //Get the current task
-        // std::cout<<std::endl<<"before decoding opcode"<<std::endl;
         Instruction task =  decode_opcode(ctx);
-        // std::cout<<std::endl<<"after decoding opcode"<<std::endl;
-        std::cout<<"Task name: "<<task.name;
 
-        //Execute the current task
-        // std::cout<<std::endl<<"before executing opcode"<<std::endl;
-        task.execute();
-        // std::cout<<std::endl<<"after executing opcode"<<std::endl;
-
-
-        // Displaying evm
-        std::cout<<task.name<<" @ pc = "<<prev_pc<<std::endl;
-        ctx.stack.print();
-        // Memory display left
+        // If task name == "" then operand skip
+        if(task.name != ""){
+            //Execute the current task
+            task.execute();
+            // Displaying evm
+            std::cout<<task.name<<" @ pc = "<<prev_pc<<std::endl;
+            ctx.stack.print();
+            // Memory display left
+        }
+        else{
+            // Move to the next byte
+            // ctx.inc_pc();
+        }
+      
     }
 }
 
