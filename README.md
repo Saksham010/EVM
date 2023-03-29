@@ -5,10 +5,8 @@ Building a basic evm clone from scratch
 1. Clone the repo
 2. Write evm supported assembly in hello.easm (Only PUSH,ADD,MUL,MSTORE8,STOP,RETURN) has been implemented
 <div>
-  <img src="https://iili.io/HNLjoAX.png" title="Opcode" alt="Opcode" width="40" height="40"/>&nbsp;
-  [![Screenshot-from-2023-03-29-19-29-48.png](https://i.postimg.cc/RVBWty3G/Screenshot-from-2023-03-29-19-29-48.png)](https://postimg.cc/CdcMTvsf)
+  <img src="https://i.postimg.cc/RVBWty3G/Screenshot-from-2023-03-29-19-29-48.png" title="Opcode" alt="Opcode" width="40" height="40"/>&nbsp;
 </div>
-[![Screenshot-from-2023-03-29-19-29-48.png](https://i.postimg.cc/RVBWty3G/Screenshot-from-2023-03-29-19-29-48.png)](https://postimg.cc/CdcMTvsf)
 
 In above example
   a) first command pushes "6" to stack
