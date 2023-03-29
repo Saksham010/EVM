@@ -30,5 +30,5 @@ In above example
 5. Compile ExecutionContext.cpp and run [name].out file with bytecode as parameter. Eg: ./a.out 600660070260005360016000f3
 6. Following ouput is expected: 
 <div>
-  <img src="https://i.postimg.cc/tg3q9Ckj/Screenshot-from-2023-03-29-19-33-34.png" title="Opcode" alt="Opcode" width="500" height="400"/>&nbsp;
+  <img src="https://i.postimg.cc/tg3q9Ckj/Screenshot-from-2023-03-29-19-33-34.png" title="Opcode" alt="Opcode" width="600" height="500"/>&nbsp;
 </div>
