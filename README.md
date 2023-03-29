@@ -5,7 +5,7 @@ Building a basic evm clone from scratch
 1. Clone the repo
 2. Write evm supported assembly in hello.easm (Only PUSH,ADD,MUL,MSTORE8,STOP,RETURN) has been implemented
 <div>
-  <img src="https://freeimage.host/i/HNLjoAX" title="Opcode" alt="Opcode" width="40" height="40"/>&nbsp;
+  <img src="https://iili.io/HNLjoAX.png" title="Opcode" alt="Opcode" width="40" height="40"/>&nbsp;
   
 </div>
 
