@@ -9,6 +9,7 @@ Building a basic evm clone from scratch
 </div>
 
 In above example
+
     a. first command pushes "6" to stack
     
     b. second command pushes "7" to stack
